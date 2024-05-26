@@ -81,10 +81,8 @@ class Post(BaseModel):
                                       auto_now_add=True)
     image = models.ImageField('Фото', upload_to='birthdays_images', blank=True)
 
-    
     def comment_count(self):
         return Comments.objects.filter(post=self).count()
-        
 
     class Meta:
         verbose_name = 'публикация'
@@ -93,12 +91,12 @@ class Post(BaseModel):
 
     def __str__(self):
         return self.title
-    
+
 
 class Comments(models.Model):
     text = models.TextField('Текст комментария')
     post = models.ForeignKey(
-        Post, 
+        Post,
         on_delete=models.CASCADE,
         related_name='comment',
     )
@@ -106,5 +104,4 @@ class Comments(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
-        ordering = ('created_at',) 
-
+        ordering = ('created_at',)

@@ -19,15 +19,13 @@ urlpatterns = [
 
     # Работа с пользователем:
     path('auth/', include('django.contrib.auth.urls')),
-    path('auth/registration/', 
-        CreateView.as_view(
-            template_name='registration/registration_form.html',
-            form_class=UserCreationForm,
-            success_url=reverse_lazy('blog:index'),
-        ),
+    path('auth/registration/', CreateView.as_view(
+        template_name='registration/registration_form.html',
+        form_class=UserCreationForm,
+        success_url=reverse_lazy('blog:index'),),
         name='registration',
     ),
-    
+
     # Приложения:
     path('', include('blog.urls')),
     path('pages/', include('pages.urls'))
