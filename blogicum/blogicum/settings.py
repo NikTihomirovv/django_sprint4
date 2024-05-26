@@ -12,7 +12,6 @@ ALLOWED_HOSTS = [
 ]
 
 INSTALLED_APPS = [
-    'django_bootstrap5',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -22,7 +21,8 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'blog.apps.BlogConfig',
     'pages.apps.PagesConfig',
-    'core.apps.CoreConfig'
+    'core.apps.CoreConfig',
+    "django_bootstrap5",
 ]
 
 MIDDLEWARE = [
@@ -101,11 +101,12 @@ INTERNAL_IPS = [
     '127.0.0.1',
 ]
 
-CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
-
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
-
 LOGIN_REDIRECT_URL = 'blog:index'
 
-MEDIA_ROOT = BASE_DIR / 'media'
+
+CSRF_FAILURE_VIEW = 'pages.views.csrf_failure' 
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = BASE_DIR / 'sent_emails' 
+
+MEDIA_ROOT = BASE_DIR / 'media' 
