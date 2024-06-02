@@ -1,7 +1,27 @@
-from django.urls import path
+from django.urls import include, path
+
 from . import views
 
 app_name = 'blog'
+
+post_urls = [
+    path('<int:pk>/',
+         views.PostDetailView.as_view(),
+         name='post_detail'),
+
+    path('create/',
+         views.CreatePostCreateView.as_view(),
+         name='create_post'),
+
+    path('<int:pk>/edit/',
+         views.EditPostUpdateView.as_view(),
+         name='edit_post'),
+
+    path('<int:pk>/delete/',
+         views.DeletePostDeleteView.as_view(),
+         name='delete_post'),
+]
+
 
 urlpatterns = [
     # Посты.
@@ -9,21 +29,8 @@ urlpatterns = [
          views.IndexListView.as_view(),
          name='index'),
 
-    path('posts/<int:pk>/',
-         views.PostDetailView.as_view(),
-         name='post_detail'),
+    path('posts/', include(post_urls)),
 
-    path('posts/create/',
-         views.CreatePostCreateView.as_view(),
-         name='create_post'),
-
-    path('posts/<int:pk>/edit/',
-         views.EditPostUpdateView.as_view(),
-         name='edit_post'),
-
-    path('posts/<int:pk>/delete/',
-         views.DeletePostDeleteView.as_view(),
-         name='delete_post'),
 
     # Комменты.
     path('posts/<int:pk>/comment/',
@@ -38,14 +45,12 @@ urlpatterns = [
          views.delete_comment,
          name='delete_comment'),
 
-
-
-
     path('category/<slug:category_slug>/', views.category_posts,
          name='category_posts'),
 
+
     # Профиль.
-    path('profile/<slug:username>/',
+    path('profile/<str:username>/',
          views.ProfileListView.as_view(),
          name='profile'),
 
