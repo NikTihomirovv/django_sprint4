@@ -32,7 +32,7 @@ class CommentsAdmin(admin.ModelAdmin):
         'text',
     )
 
-    search_fields = ('post', 'author',)
+    search_fields = ('post__text', 'author__username')
     list_filter = ('post',)
     list_display_links = ('post',)
 

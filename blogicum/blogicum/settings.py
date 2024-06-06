@@ -101,6 +101,7 @@ INTERNAL_IPS = [
 ]
 
 LOGIN_REDIRECT_URL = 'blog:index'
+LOGIN_URL = '/auth/login/'
 
 
 CSRF_FAILURE_VIEW = 'pages.views.csrf_failure'

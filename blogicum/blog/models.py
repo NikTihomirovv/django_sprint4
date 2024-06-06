@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
-
 from django.db import models
 
+from .constants import title_cut
 
 User = get_user_model()
 
@@ -10,9 +10,11 @@ class BaseModelIsPublished(models.Model):
     is_published = models.BooleanField(
         default=True,
         verbose_name='Опубликовано',
-        help_text=('Снимите галочку, '
-                   'чтобы скрыть публикацию.'
-                   ))
+        help_text=(
+            'Снимите галочку, '
+            'чтобы скрыть публикацию.'
+        )
+    )
     created_at = models.DateTimeField(
         verbose_name='Добавлено',
         auto_now_add=True
@@ -33,17 +35,19 @@ class Category(BaseModelIsPublished):
     slug = models.SlugField(
         unique=True,
         verbose_name='Идентификатор',
-        help_text=('Идентификатор страницы для URL; '
-                   'разрешены символы латиницы, цифры, '
-                   'дефис и подчёркивание.'
-                   ))
+        help_text=(
+            'Идентификатор страницы для URL; '
+            'разрешены символы латиницы, цифры, '
+            'дефис и подчёркивание.'
+        )
+    )
 
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title[0:21]
+        return self.title[:title_cut]
 
 
 class Location(BaseModelIsPublished):
@@ -57,7 +61,7 @@ class Location(BaseModelIsPublished):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return self.name[0:21]
+        return self.name[:title_cut]
 
 
 class Post(BaseModelIsPublished):
@@ -98,13 +102,13 @@ class Post(BaseModelIsPublished):
     )
 
     class Meta:
-        ordering = ["-pub_date"]
+        ordering = ("-pub_date",)
         verbose_name = 'Публикация'
         verbose_name_plural = 'Публикации'
         default_related_name = 'posts'
 
     def __str__(self):
-        return self.title[0:21]
+        return self.title[:title_cut]
 
 
 class Comments(models.Model):
@@ -120,7 +124,7 @@ class Comments(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='authors',
+        related_name='comments',
     )
 
     class Meta:

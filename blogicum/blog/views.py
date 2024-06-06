@@ -1,18 +1,16 @@
-import datetime
-
-from django.db.models import Q, Count
+from blog.constants import num_of_posts
+from blog.forms import CommentsForm, CreatePostForm
+from blog.models import Category, Comments, Post, User
+from blog.service import (filter_post_list, get_post_list,
+                          order_and_annotate_post_list, paginator)
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404, render, redirect
-from django.views.generic import (
-    CreateView, DeleteView, DetailView, ListView, UpdateView
-)
-from django.urls import reverse_lazy, reverse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
+                                  UpdateView)
 
-from blog.constants import num_of_posts
-from blog.forms import CreatePostForm, CommentsForm
-from blog.models import Category, Comments, Post, User
-from blog.service import paginator, get_post_list
+from .mixins import DeleteAndEditPostMixin, PostMixin
 
 
 def category_posts(request, category_slug):
@@ -21,11 +19,9 @@ def category_posts(request, category_slug):
         slug=category_slug,
         is_published=True)
 
-    post_list = get_post_list().filter(
-        category__slug=category_slug,
-        category__is_published=True,
-        is_published=True,
-        pub_date__lte=datetime.datetime.now()
+    post_list = get_post_list()
+    post_list = filter_post_list(post_list).filter(
+        category__slug=category_slug
     ).order_by('-pub_date')
 
     context = {
@@ -42,17 +38,11 @@ class ProfileListView(ListView):
 
     def get_context_data(self, **kwargs):
         user = get_object_or_404(User, username=self.kwargs.get('username'))
-        post_list = get_post_list()
+        post_list = get_post_list().filter(author=user)
+        post_list = order_and_annotate_post_list(post_list)
 
-        if self.request.user == user:
-            post_list = post_list.filter(
-                author__username=user
-            ).order_by('-pub_date').annotate(comment_count=Count("comments"))
-        else:
-            post_list = post_list.filter(
-                is_published=True,
-                pub_date__lte=datetime.datetime.now()
-            ).order_by('-pub_date').annotate(comment_count=Count("comments"))
+        if self.request.user != user:
+            post_list = filter_post_list(post_list)
 
         context = {
             'profile': user,
@@ -67,7 +57,7 @@ class EditProfileUpdateView(LoginRequiredMixin, UpdateView):
     fields = ('first_name', 'last_name', 'username', 'email')
 
     def get_object(self):
-        return get_object_or_404(User, username=self.request.user)
+        return self.request.user
 
     def form_valid(self, form):
         form.instance.author = self.request.user
@@ -80,62 +70,32 @@ class EditProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 
 # Посты.
-class PostMixin:
-    def dispatch(self, request, *args, **kwargs):
-        instance = get_object_or_404(Post, pk=kwargs['pk'])
-        if instance.author != request.user:
-            return redirect('blog:post_detail', pk=kwargs['pk'])
-
-        return super().dispatch(request, *args, **kwargs)
-
-
 class IndexListView(ListView):
     model = Post
     template_name = 'blog/index.html'
+    paginate_by = num_of_posts
 
     def get_queryset(self):
-        post_list = get_post_list().filter(
-            is_published=True,
-            category__is_published=True,
-            pub_date__lte=datetime.datetime.now()
-        ).order_by('-pub_date').annotate(comment_count=Count("comments"))
+        post_list = get_post_list()
+        post_list = filter_post_list(post_list)
+        post_list = order_and_annotate_post_list(post_list)
         return post_list
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context = {
-            'page_obj': paginator(
-                self.get_queryset(),
-                num_of_posts,
-                self.request)
-        }
-
-        return context
 
 
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
 
-    def get_object(self):
-        return super(PostDetailView, self).get_object()
+    def get_object(self, post=Post):
+        return get_object_or_404(post, pk=self.kwargs.get('pk'))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.get_object().author == self.request.user:
-            context['page_obj'] = get_object_or_404(
-                Post.objects.all().filter(
-                    Q(is_published=True) | (Q(
-                        is_published=False) & Q(
-                            author=self.request.user))),
-                pk=self.kwargs.get('pk'))
-        else:
-            context['page_obj'] = get_object_or_404(
-                get_post_list().filter(
-                    is_published=True,
-                    category__is_published=True,
-                    pub_date__lte=datetime.datetime.now()),
-                pk=self.kwargs.get('pk'))
+
+        if self.get_object().author != self.request.user:
+            post_list = get_post_list()
+            post_list = filter_post_list(post_list)
+            context['post'] = self.get_object(post_list)
 
         context['form'] = CommentsForm()
         context['comments'] = (
@@ -160,17 +120,22 @@ class CreatePostCreateView(LoginRequiredMixin, CreateView):
         )
 
 
-class EditPostUpdateView(PostMixin, LoginRequiredMixin, UpdateView):
-    model = Post
+class EditPostUpdateView(
+    LoginRequiredMixin,
+    DeleteAndEditPostMixin,
+    PostMixin,
+    UpdateView
+):
     form_class = CreatePostForm
-    template_name = 'blog/create.html'
-    success_url = reverse_lazy('blog:index')
 
 
-class DeletePostDeleteView(PostMixin, LoginRequiredMixin, DeleteView):
-    model = Post
-    template_name = 'blog/create.html'
-    success_url = reverse_lazy('blog:index')
+class DeletePostDeleteView(
+    LoginRequiredMixin,
+    DeleteAndEditPostMixin,
+    PostMixin,
+    DeleteView
+):
+    pass
 
 
 # Комменты.
