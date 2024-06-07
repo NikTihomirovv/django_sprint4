@@ -38,7 +38,9 @@ class ProfileListView(ListView):
 
     def get_context_data(self, **kwargs):
         user = get_object_or_404(User, username=self.kwargs.get('username'))
-        post_list = order_and_annotate_post_list(get_post_list().filter(author=user))
+        post_list = order_and_annotate_post_list(
+            get_post_list().filter(author=user)
+        )
 
         if self.request.user != user:
             post_list = filter_post_list(post_list)
@@ -71,7 +73,9 @@ class IndexListView(ListView):
     paginate_by = PAGINATE_BY
 
     def get_queryset(self):
-        post_list = order_and_annotate_post_list(filter_post_list(get_post_list()))
+        post_list = order_and_annotate_post_list(
+            filter_post_list(get_post_list())
+        )
         return post_list
 
 
