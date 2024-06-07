@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from .constants import title_cut
+from .constants import TITLE_CUT
 
 User = get_user_model()
 
@@ -47,7 +47,7 @@ class Category(BaseModelIsPublished):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title[:title_cut]
+        return self.title[:TITLE_CUT]
 
 
 class Location(BaseModelIsPublished):
@@ -61,7 +61,7 @@ class Location(BaseModelIsPublished):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return self.name[:title_cut]
+        return self.name[:TITLE_CUT]
 
 
 class Post(BaseModelIsPublished):
@@ -74,9 +74,12 @@ class Post(BaseModelIsPublished):
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
-        help_text=('Если установить дату и время '
-                   'в будущем — можно делать '
-                   'отложенные публикации.'))
+        help_text=(
+            'Если установить дату и время '
+            'в будущем — можно делать '
+            'отложенные публикации.'
+        )
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -108,7 +111,7 @@ class Post(BaseModelIsPublished):
         default_related_name = 'posts'
 
     def __str__(self):
-        return self.title[:title_cut]
+        return self.title[:TITLE_CUT]
 
 
 class Comments(models.Model):

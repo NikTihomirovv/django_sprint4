@@ -1,2 +1,2 @@
-num_of_posts = 10
-title_cut = 21
+PAGINATE_BY = 10
+TITLE_CUT = 21

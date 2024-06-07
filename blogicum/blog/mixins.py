@@ -1,6 +1,7 @@
-from blog.models import Post
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+
+from blog.models import Post
 
 
 class PostMixin:

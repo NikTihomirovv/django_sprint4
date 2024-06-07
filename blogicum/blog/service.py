@@ -1,8 +1,9 @@
 import datetime
 
-from blog.models import Post
 from django.core.paginator import Paginator
 from django.db.models import Count
+
+from blog.models import Post
 
 
 def paginator(post_list, num_of_posts, request):

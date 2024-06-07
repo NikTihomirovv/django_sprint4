@@ -1,14 +1,15 @@
-from blog.constants import num_of_posts
-from blog.forms import CommentsForm, CreatePostForm
-from blog.models import Category, Comments, Post, User
-from blog.service import (filter_post_list, get_post_list,
-                          order_and_annotate_post_list, paginator)
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
+
+from blog.constants import PAGINATE_BY
+from blog.forms import CommentsForm, CreatePostForm
+from blog.models import Category, Comments, Post, User
+from blog.service import (filter_post_list, get_post_list,
+                          order_and_annotate_post_list, paginator)
 
 from .mixins import DeleteAndEditPostMixin, PostMixin
 
@@ -19,13 +20,12 @@ def category_posts(request, category_slug):
         slug=category_slug,
         is_published=True)
 
-    post_list = get_post_list()
-    post_list = filter_post_list(post_list).filter(
+    post_list = filter_post_list(get_post_list()).filter(
         category__slug=category_slug
     ).order_by('-pub_date')
 
     context = {
-        'page_obj': paginator(post_list, num_of_posts, request),
+        'page_obj': paginator(post_list, PAGINATE_BY, request),
         'category': category
     }
     return render(request, 'blog/category.html', context)
@@ -38,15 +38,14 @@ class ProfileListView(ListView):
 
     def get_context_data(self, **kwargs):
         user = get_object_or_404(User, username=self.kwargs.get('username'))
-        post_list = get_post_list().filter(author=user)
-        post_list = order_and_annotate_post_list(post_list)
+        post_list = order_and_annotate_post_list(get_post_list().filter(author=user))
 
         if self.request.user != user:
             post_list = filter_post_list(post_list)
 
         context = {
             'profile': user,
-            'page_obj': paginator(post_list, num_of_posts, self.request)
+            'page_obj': paginator(post_list, PAGINATE_BY, self.request)
         }
         return context
 
@@ -59,10 +58,6 @@ class EditProfileUpdateView(LoginRequiredMixin, UpdateView):
     def get_object(self):
         return self.request.user
 
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-
     def get_success_url(self):
         return reverse(
             'blog:profile', kwargs={"username": self.request.user}
@@ -73,12 +68,10 @@ class EditProfileUpdateView(LoginRequiredMixin, UpdateView):
 class IndexListView(ListView):
     model = Post
     template_name = 'blog/index.html'
-    paginate_by = num_of_posts
+    paginate_by = PAGINATE_BY
 
     def get_queryset(self):
-        post_list = get_post_list()
-        post_list = filter_post_list(post_list)
-        post_list = order_and_annotate_post_list(post_list)
+        post_list = order_and_annotate_post_list(filter_post_list(get_post_list()))
         return post_list
 
 
@@ -93,8 +86,7 @@ class PostDetailView(DetailView):
         context = super().get_context_data(**kwargs)
 
         if self.get_object().author != self.request.user:
-            post_list = get_post_list()
-            post_list = filter_post_list(post_list)
+            post_list = filter_post_list(get_post_list())
             context['post'] = self.get_object(post_list)
 
         context['form'] = CommentsForm()
